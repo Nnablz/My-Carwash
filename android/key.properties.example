@@ -1,0 +1,15 @@
+# Android Release Signing Configuration Template
+# ---------------------------------------------------------------------------
+# Copy this file to `android/key.properties` (gitignored) and replace the
+# placeholder values with your actual keystore credentials.
+#
+# To generate a local release keystore and `android/key.properties`, run:
+#   powershell -ExecutionPolicy Bypass -File scripts/generate_keystore.ps1 -WriteKeyProperties
+#
+# NEVER commit `android/key.properties` or any `*.jks` / `*.keystore` file.
+# ---------------------------------------------------------------------------
+
+storePassword=CHANGE_ME_STORE_PASSWORD
+keyPassword=CHANGE_ME_KEY_PASSWORD
+keyAlias=clearwash
+storeFile=clearwash-release.jks
