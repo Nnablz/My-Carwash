@@ -1,0 +1,197 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isStaff() {
+      return request.auth != null;
+    }
+
+    function isNonEmptyString(val, maxLen) {
+      return val is string && val.size() > 0 && val.size() <= maxLen;
+    }
+
+    function isNullableString(val, maxLen) {
+      return val == null || (val is string && val.size() <= maxLen);
+    }
+
+    function isNullableTimestamp(val) {
+      return val == null || val is timestamp;
+    }
+
+    function isValidOutlet(data) {
+      return isNonEmptyString(data.name, 120)
+        && data.activeBays is int
+        && data.activeBays >= 0
+        && data.activeBays <= 50
+        && (!data.keys().hasAny(['lastQueueDateKey'])
+          || data.lastQueueDateKey == null
+          || (data.lastQueueDateKey is string
+            && data.lastQueueDateKey.matches('^\\d{4}-\\d{2}-\\d{2}$')))
+        && (!data.keys().hasAny(['lastQueueSeq'])
+          || (data.lastQueueSeq is int && data.lastQueueSeq >= 0))
+        && (!data.keys().hasAny(['updatedAt'])
+          || isNullableTimestamp(data.updatedAt));
+    }
+
+    function isValidBay(data, bayId) {
+      return data.id is string
+        && data.id == bayId
+        && data.id.size() > 0
+        && data.id.size() <= 40
+        && isNonEmptyString(data.name, 60)
+        && (data.supportedType == null || data.supportedType in ['mobil', 'motor'])
+        && data.status in ['available', 'occupied', 'maintenance']
+        && isNullableString(data.currentOrderId, 80)
+        && isNullableString(data.currentPlate, 20)
+        && isNullableString(data.operatorName, 80)
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidCatalogItem(data, catalogId) {
+      return data.id is string
+        && data.id == catalogId
+        && data.id.size() > 0
+        && data.id.size() <= 80
+        && data.itemType in ['package', 'vehicle_series']
+        && data.vehicleType in ['mobil', 'motor']
+        && data.vehicleSize in ['small', 'medium', 'large']
+        && data.isActive is bool
+        && (!data.keys().hasAny(['updatedAt'])
+          || isNullableTimestamp(data.updatedAt))
+        && (
+          (
+            data.itemType == 'package'
+            && isNonEmptyString(data.name, 80)
+            && (!data.keys().hasAny(['description'])
+              || isNullableString(data.description, 200))
+            && data.price is int
+            && data.price > 0
+            && data.price <= 10000000
+            && data.estimatedMinutes is int
+            && data.estimatedMinutes > 0
+            && data.estimatedMinutes <= 600
+            && (!data.keys().hasAny(['brand']) || data.brand == null)
+            && (!data.keys().hasAny(['series']) || data.series == null)
+          )
+          || (
+            data.itemType == 'vehicle_series'
+            && isNonEmptyString(data.brand, 60)
+            && isNonEmptyString(data.series, 80)
+            && (!data.keys().hasAny(['name'])
+              || isNullableString(data.name, 80))
+            && (!data.keys().hasAny(['description'])
+              || isNullableString(data.description, 200))
+            && (!data.keys().hasAny(['price'])
+              || data.price == null
+              || (data.price is int && data.price == 0))
+            && (!data.keys().hasAny(['estimatedMinutes'])
+              || data.estimatedMinutes == null
+              || (data.estimatedMinutes is int && data.estimatedMinutes == 0))
+          )
+        );
+    }
+
+    function isValidOrder(data, outletId, orderId) {
+      return data.id is string
+        && data.id == orderId
+        && data.id.size() > 0
+        && data.id.size() <= 80
+        && isNonEmptyString(data.queueNumber, 20)
+        && data.outletId is string
+        && data.outletId == outletId
+        && isNonEmptyString(data.shiftId, 80)
+        && data.vehicleType in ['mobil', 'motor']
+        && data.vehicleSize in ['small', 'medium', 'large']
+        && isNonEmptyString(data.brand, 60)
+        && isNonEmptyString(data.model, 80)
+        && isNonEmptyString(data.licensePlate, 20)
+        && isNonEmptyString(data.packageId, 60)
+        && isNonEmptyString(data.packageName, 80)
+        && data.price is int
+        && data.price > 0
+        && data.price <= 10000000
+        && data.paymentMethod in ['cash', 'qris']
+        && data.paymentStatus in ['pending', 'paid']
+        && data.cashTendered is int
+        && data.cashTendered >= 0
+        && data.cashTendered <= 20000000
+        && data.changeAmount is int
+        && data.changeAmount >= 0
+        && data.changeAmount <= 20000000
+        && isNullableString(data.qrisProofFileName, 255)
+        && data.status in ['waiting', 'washing', 'ready', 'completed', 'cancelled']
+        && isNullableString(data.bayId, 40)
+        && isNullableString(data.bayName, 60)
+        && isNullableString(data.operatorName, 80)
+        && isNonEmptyString(data.pickupDisplay, 60)
+        && data.estimatedReadyAt is timestamp
+        && isNullableTimestamp(data.startedWashingAt)
+        && isNullableTimestamp(data.finishedAt)
+        && isNullableTimestamp(data.completedAt)
+        && data.createdAt is timestamp
+        && data.dateKey is string
+        && data.dateKey.matches('^\\d{4}-\\d{2}-\\d{2}$');
+    }
+
+    function isValidShift(data, shiftId) {
+      return data.id is string
+        && data.id == shiftId
+        && data.id.size() > 0
+        && data.id.size() <= 80
+        && isNonEmptyString(data.cashierName, 80)
+        && isNonEmptyString(data.terminalId, 40)
+        && isNonEmptyString(data.bayLabel, 60)
+        && isNonEmptyString(data.shiftLabel, 60)
+        && data.openedAt is timestamp
+        && isNullableTimestamp(data.closedAt)
+        && data.openingCash is int
+        && data.openingCash >= 0
+        && data.openingCash <= 50000000
+        && data.physicalCashCount is int
+        && data.physicalCashCount >= 0
+        && data.physicalCashCount <= 100000000
+        && data.supervisorNotes is string
+        && data.supervisorNotes.size() <= 1000
+        && data.status in ['open', 'closed']
+        && ((data.status == 'open' && data.closedAt == null)
+          || (data.status == 'closed' && data.closedAt is timestamp));
+    }
+
+    match /outlets/{outletId} {
+      allow read: if isStaff();
+      allow create, update: if isStaff() && isValidOutlet(request.resource.data);
+      allow delete: if false;
+
+      match /bays/{bayId} {
+        allow read: if isStaff();
+        allow create, update: if isStaff() && isValidBay(request.resource.data, bayId);
+        allow delete: if false;
+      }
+
+      match /catalogs/{catalogId} {
+        allow read: if isStaff();
+        allow create, update: if isStaff()
+          && isValidCatalogItem(request.resource.data, catalogId);
+        allow delete: if false;
+      }
+
+      match /orders/{orderId} {
+        allow read: if isStaff();
+        allow create, update: if isStaff()
+          && isValidOrder(request.resource.data, outletId, orderId);
+        allow delete: if false;
+      }
+
+      match /shifts/{shiftId} {
+        allow read: if isStaff();
+        allow create: if isStaff()
+          && isValidShift(request.resource.data, shiftId)
+          && request.resource.data.status == 'open';
+        allow update: if isStaff()
+          && resource.data.status == 'open'
+          && isValidShift(request.resource.data, shiftId);
+        allow delete: if false;
+      }
+    }
+  }
+}

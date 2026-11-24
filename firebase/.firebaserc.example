@@ -1,0 +1,7 @@
+{
+  "projects": {
+    "default": "clearwash-pos-dev",
+    "dev": "clearwash-pos-dev",
+    "prod": "clearwash-pos-prod"
+  }
+}

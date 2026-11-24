@@ -1,5 +1,5 @@
 name: protein
-description: "Base Flutter Android application with Riverpod and Dependency Injection."
+description: "ClearWash - Carwash Mobile POS & Queue Management System"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -10,6 +10,11 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^3.5.0
+  firebase_core: ^5.1.0
+  cloud_firestore: ^7.1.0
+  firebase_auth: ^7.0.1
+  qr_flutter: ^4.1.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
   flutter_test:
